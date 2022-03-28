@@ -1,0 +1,3 @@
+query character ($id: Number) {
+  character (id: $id)
+}

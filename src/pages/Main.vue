@@ -5,7 +5,41 @@
       :selectedFilters="selectedFilters"
       @select-filter="selectFilter"
     />
-    <CardList :cards="cards" />
+
+    <ApolloQuery
+      :query="
+        (gql) => gql`
+          query getCharacters($page: Int!, $filter: FilterCharacter) {
+            characters(page: $page, filter: $filter) {
+              results {
+                id
+                name
+                status
+                species
+                gender
+                image
+                location {
+                  name
+                }
+              }
+            }
+          }
+        `
+      "
+      :variables="{
+        page: 1,
+        filter: { species: 'alien' },
+      }"
+    >
+      <template slot-scope="{ result: { data, loading, error } }">
+        <div v-if="loading">Loading...</div>
+        <div v-else-if="error">An error occurred</div>
+        <CardList v-else-if="data" :cards="data.characters.results" />
+        <div v-else>No result :(</div>
+      </template>
+    </ApolloQuery>
+
+    <!-- <CardList :cards="cards" /> -->
     <AppPagination
       :pagesInfo="pages"
       @paginate-to-page="selectFilter"
@@ -15,7 +49,7 @@
 </template>
 
 <script>
-import axios from "axios";
+// import axios from "axios";
 import Filters from "../components/Filters.vue";
 import CardList from "../components/CardList.vue";
 import AppPagination from "../ui/AppPagination.vue";
@@ -58,19 +92,19 @@ export default {
       }
       this.selectedFilters[name] = param;
     },
-    fetchCards(params = {}) {
-      return axios
-        .get(`https://rickandmortyapi.com/api/character`, { params })
-        .then(({ data }) => {
-          this.pages.count = data.info.pages;
-          this.pages.prevLink = data.info.prev;
-          this.pages.nextLink = data.info.next;
-          this.cards = data.results;
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    },
+    // fetchCards(params = {}) {
+    // return axios
+    //   .get(`https://rickandmortyapi.com/api/character`, { params })
+    //   .then(({ data }) => {
+    //     this.pages.count = data.info.pages;
+    //     this.pages.prevLink = data.info.prev;
+    //     this.pages.nextLink = data.info.next;
+    //     this.cards = data.results;
+    //   })
+    //   .catch((err) => {
+    //     console.error(err);
+    //   });
+    // },
   },
   watch: {
     selectedFilters: {
@@ -83,9 +117,9 @@ export default {
       deep: true,
     },
   },
-  async created() {
-    await this.fetchCards();
-  },
+  // async created() {
+  //   await this.fetchCards();
+  // },
   // mounted() {
   //   document.addEventListener("DOMContentLoaded", () => {
   //     console.log("loaded");

@@ -11,6 +11,12 @@
         (gql) => gql`
           query getCharacters($page: Int!, $filter: FilterCharacter) {
             characters(page: $page, filter: $filter) {
+              info {
+                count
+                pages
+                next
+                prev
+              }
               results {
                 id
                 name
@@ -27,29 +33,31 @@
         `
       "
       :variables="{
-        page: 1,
-        filter: { species: 'alien' },
+        page: currentPage,
+        filter: selectedFilters,
       }"
     >
       <template slot-scope="{ result: { data, loading, error } }">
         <div v-if="loading">Loading...</div>
         <div v-else-if="error">An error occurred</div>
-        <CardList v-else-if="data" :cards="data.characters.results" />
+        <div v-else-if="data">
+          <CardList :cards="data.characters.results" />
+          <AppPagination
+            :currentPage="currentPage"
+            :pages="data.characters.info.pages"
+            :next="data.characters.info.next"
+            :prev="data.characters.info.prev"
+            v-if="data.characters.info.pages > 1"
+            @paginate-to-page="currentPage = $event"
+          />
+        </div>
         <div v-else>No result :(</div>
       </template>
     </ApolloQuery>
-
-    <!-- <CardList :cards="cards" /> -->
-    <AppPagination
-      :pagesInfo="pages"
-      @paginate-to-page="selectFilter"
-      v-if="pages.count > 1"
-    />
   </div>
 </template>
 
 <script>
-// import axios from "axios";
 import Filters from "../components/Filters.vue";
 import CardList from "../components/CardList.vue";
 import AppPagination from "../ui/AppPagination.vue";
@@ -63,12 +71,7 @@ export default {
   },
   data() {
     return {
-      cards: [],
-      pages: {
-        count: null,
-        prevLink: "",
-        nextLink: "",
-      },
+      currentPage: 1,
       filtersData: [
         { name: "species", queryParams: ["alien", "human"] },
         { name: "status", queryParams: ["alive", "dead", "unknown"] },
@@ -78,53 +81,23 @@ export default {
         },
       ],
       selectedFilters: {
-        species: "all",
-        status: "all",
-        gender: "all",
-        page: 1,
+        species: "",
+        status: "",
+        gender: "",
       },
     };
   },
   methods: {
     selectFilter({ name, param }) {
       if (name !== "page") {
-        this.selectedFilters.page = 1;
+        this.currentPage = 1;
       }
-      this.selectedFilters[name] = param;
-    },
-    // fetchCards(params = {}) {
-    // return axios
-    //   .get(`https://rickandmortyapi.com/api/character`, { params })
-    //   .then(({ data }) => {
-    //     this.pages.count = data.info.pages;
-    //     this.pages.prevLink = data.info.prev;
-    //     this.pages.nextLink = data.info.next;
-    //     this.cards = data.results;
-    //   })
-    //   .catch((err) => {
-    //     console.error(err);
-    //   });
-    // },
-  },
-  watch: {
-    selectedFilters: {
-      async handler(n) {
-        const params = Object.fromEntries(
-          Object.entries(n).filter((item) => item[1] !== "all")
-        );
-        await this.fetchCards(params);
-      },
-      deep: true,
+      this.selectedFilters = {
+        ...this.selectedFilters,
+        [name]: param === "all" ? "" : param,
+      };
     },
   },
-  // async created() {
-  //   await this.fetchCards();
-  // },
-  // mounted() {
-  //   document.addEventListener("DOMContentLoaded", () => {
-  //     console.log("loaded");
-  //   });
-  // },
 };
 </script>
 

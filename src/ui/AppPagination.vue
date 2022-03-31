@@ -1,15 +1,10 @@
 <template>
-<!-- TODO: hide pagination in the middle -->
+  <!-- TODO: hide pagination in the middle -->
   <div class="pagination">
     <button
       class="pagination__btn"
-      :disabled="!pagesInfo.prevLink"
-      @click="
-        $emit('paginate-to-page', {
-          name: 'page',
-          param: +getPage(pagesInfo.prevLink),
-        })
-      "
+      :disabled="!prev"
+      @click="$emit('paginate-to-page', prev)"
     >
       &#10096;
     </button>
@@ -17,20 +12,15 @@
       class="pagination__btn"
       v-for="page in pages"
       :key="page"
-      :disabled="+$route.query.page === page"
-      @click="$emit('paginate-to-page', { name: 'page', param: page })"
+      :disabled="currentPage === page"
+      @click="$emit('paginate-to-page', page)"
     >
       {{ page }}
     </button>
     <button
       class="pagination__btn"
-      :disabled="!pagesInfo.nextLink"
-      @click="
-        $emit('paginate-to-page', {
-          name: 'page',
-          param: +getPage(pagesInfo.nextLink),
-        })
-      "
+      :disabled="!next"
+      @click="$emit('paginate-to-page', next)"
     >
       &#10095;
     </button>
@@ -41,15 +31,26 @@
 export default {
   name: "AppPagination",
   props: {
-    pagesInfo: {
-      type: Object,
+    pages: {
+      type: Number,
       required: false,
-      default: () => {},
+    },
+    next: {
+      type: Number,
+      required: false,
+    },
+    prev: {
+      type: Number,
+      required: false,
+    },
+    currentPage: {
+      type: Number,
+      required: false,
     },
   },
   computed: {
-    pages() {
-      return [...Array(this.pagesInfo.count).keys()].map((item) => item + 1);
+    pagesList() {
+      return [...Array(this.pages).keys()].map((item) => item + 1);
     },
   },
   methods: {
